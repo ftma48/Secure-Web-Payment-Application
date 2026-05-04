@@ -1,12 +1,16 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.db import transaction
 from payapp.models import Account, Transaction, PaymentRequest, Notification
 from payapp.forms import SendPaymentForm, RequestPaymentForm
 import requests as http_requests
 from decimal import Decimal
+from register.forms import RegisterForm
+
+# payments/requests
 
 @login_required(login_url='/webapps2026/register/login/')
 def index(request):
@@ -217,3 +221,62 @@ def handle_request(request, request_id):
             )
 
     return redirect('notifications')
+
+# admin funcs
+
+def admin_check(request):
+    # is user logged in and staff
+    return request.user.is_authenticated and request.user.is_staff
+
+
+@login_required(login_url='/webapps2026/register/login/')
+def admin_users(request):
+    # redirect non-admins
+    if not admin_check(request):
+        messages.error(request, "Access denied.")
+        return redirect('index')
+
+    # get all users
+    users = User.objects.all().order_by('username')
+    user_accounts = []
+    for u in users:
+        try:
+            account = Account.objects.get(user=u)
+        except Account.DoesNotExist:
+            account = None
+        user_accounts.append((u, account))
+
+    return render(request, 'payapp/adminusers.html', {'user_accounts': user_accounts})
+
+
+@login_required(login_url='/webapps2026/register/login/')
+def admin_transactions(request):
+    # redirect non-admins
+    if not admin_check(request):
+        messages.error(request, "Access denied.")
+        return redirect('index')
+
+    # get all transactions
+    all_transactions = Transaction.objects.all().order_by('-timestamp')
+    return render(request, 'payapp/admintransactions.html', {'transactions': all_transactions})
+
+
+@login_required(login_url='/webapps2026/register/login/')
+def admin_register(request):
+    if not admin_check(request):
+        messages.error(request, "Access denied.")
+        return redirect('index')
+
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            user.is_staff = True
+            user.save()
+            messages.success(request, f"Admin {user.username} created successfully.")
+            return redirect('admin_users')
+        messages.error(request, "Invalid form data.")
+    else:
+        form = RegisterForm()
+
+    return render(request, 'payapp/adminregister.html', {'form': form})

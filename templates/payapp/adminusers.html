@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin - Users{% endblock %}
+
+{% block content %}
+    <h2>All Users</h2>
+    <a href="{% url 'admin_register' %}" class="btn btn-primary mb-3">Register New Admin</a>
+    <a href="{% url 'admin_transactions' %}" class="btn btn-secondary mb-3 ms-2">View All Transactions</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Balance</th>
+                <th>Currency</th>
+                <th>Admin</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u, account in user_accounts %}
+            <tr>
+                <td>{{ u.username }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.first_name }} {{ u.last_name }}</td>
+                <td>{% if account %}{{ account.balance }}{% else %}N/A{% endif %}</td>
+                <td>{% if account %}{{ account.currency }}{% else %}N/A{% endif %}</td>
+                <td>{% if u.is_staff %}✅{% else %}❌{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

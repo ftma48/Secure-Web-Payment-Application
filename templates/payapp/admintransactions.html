@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin - Transactions{% endblock %}
+
+{% block content %}
+    <h2>All Transactions</h2>
+    <a href="{% url 'admin_users' %}" class="btn btn-secondary mb-3">Back to Users</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>From</th>
+                <th>To</th>
+                <th>Amount</th>
+                <th>Currency</th>
+                <th>Type</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in transactions %}
+            <tr>
+                <td>{{ t.sender.username }}</td>
+                <td>{{ t.recipient.username }}</td>
+                <td>{{ t.amount }}</td>
+                <td>{{ t.currency }}</td>
+                <td>{{ t.transaction_type }}</td>
+                <td>{{ t.timestamp|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

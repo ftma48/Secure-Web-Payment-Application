@@ -13,6 +13,9 @@
     <a class="navbar-brand" href="/webapps2026/">PayApp</a>
     <div class="ms-auto d-flex align-items-center gap-2">
         {% if user.is_authenticated %}
+            {% if user.is_staff %}
+                <a href="{% url 'admin_users' %}" class="btn btn-warning btn-sm">Admin</a>
+            {% endif %}
             <a href="{% url 'notifications' %}" class="btn btn-outline-light btn-sm position-relative">
                 Notifications
                 {% unread_count user as count %}
