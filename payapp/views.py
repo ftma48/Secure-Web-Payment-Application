@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
-from payapp.models import Account, Transaction, PaymentRequest
+from payapp.models import Account, Transaction, PaymentRequest, Notification
 from payapp.forms import SendPaymentForm, RequestPaymentForm
 import requests as http_requests
 from decimal import Decimal
@@ -74,6 +74,12 @@ def send_payment(request):
                     )
 
                 messages.success(request, f"Successfully sent {amount} {sender_account.currency} to {recipient.username}.")
+
+                # notify the recipient
+                Notification.objects.create(
+                    user=recipient,
+                    message=f"{request.user.username} sent you {amount} {sender_account.currency}."
+                )
                 return redirect('index')
 
 
@@ -114,6 +120,13 @@ def request_payment(request):
                 status='pending'
             )
             messages.success(request, f"Payment request sent to {requestee.username}.")
+
+            # notify the requestee
+            Notification.objects.create(
+                user=requestee,
+                message=f"{request.user.username} requested {amount} {Account.objects.get(user=request.user).currency} from you."
+            )
+
             return redirect('index')
     else:
         form = RequestPaymentForm()
@@ -123,17 +136,19 @@ def request_payment(request):
 
 @login_required(login_url='/webapps2026/register/login/')
 def notifications(request):
-    incoming = PaymentRequest.objects.filter(
-        requestee=request.user,
-        status='pending'
-    )
-    outgoing = PaymentRequest.objects.filter(
-        requester=request.user
+    incoming = PaymentRequest.objects.filter(requestee=request.user, status='pending')
+    outgoing = PaymentRequest.objects.filter(requester=request.user).order_by('-timestamp')
+
+    # get all notifs and mark them as read
+    user_notifications = Notification.objects.filter(
+        user=request.user
     ).order_by('-timestamp')
+    user_notifications.update(is_read=True)
 
     return render(request, 'payapp/notifications.html', {
         'incoming': incoming,
         'outgoing': outgoing,
+        'user_notifications': user_notifications,
     })
 
 
@@ -181,6 +196,11 @@ def handle_request(request, request_id):
                     payment_request.save()
 
                 messages.success(request, "Payment request accepted.")
+                # notify the requester their request was accepted
+                Notification.objects.create(
+                    user=payment_request.requester,
+                    message=f"{request.user.username} accepted your payment request of {payment_request.amount} {payment_request.currency}."
+                )
 
             except Exception as e:
                 messages.error(request, f"Payment failed: {str(e)}")
@@ -189,5 +209,11 @@ def handle_request(request, request_id):
             payment_request.status = 'rejected'
             payment_request.save()
             messages.info(request, "Payment request rejected.")
+
+            # notify of rejection
+            Notification.objects.create(
+                user=payment_request.requester,
+                message=f"{request.user.username} rejected your payment request of {payment_request.amount} {payment_request.currency}."
+            )
 
     return redirect('notifications')

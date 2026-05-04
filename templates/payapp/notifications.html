@@ -5,7 +5,21 @@
 {% block content %}
     <h2>Notifications</h2>
 
-    <h4>Incoming Payment Requests</h4>
+    <h4>Recent Activity</h4>
+    {% if user_notifications %}
+        <ul class="list-group mb-4">
+            {% for n in user_notifications %}
+                <li class="list-group-item">
+                    {{ n.message }}
+                    <span class="text-muted float-end" style="font-size:0.85em">{{ n.timestamp|date:"d/m/Y H:i" }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No notifications.</p>
+    {% endif %}
+
+    <h4 class="mt-4">Incoming Payment Requests</h4>
     {% if incoming %}
         <table class="table table-striped">
             <thead>
