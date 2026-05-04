@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <h2>Welcome, {{ user.first_name }}</h2>
+    <a href="{% url 'send_payment' %}" class="btn btn-primary mb-3">Send Payment</a>
+    <a href="{% url 'request_payment' %}" class="btn btn-primary mb-3 ms-2">Request Payment</a>
+    <a href="{% url 'notifications' %}" class="btn btn-outline-primary mb-3 ms-2">Notifications</a>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Your Balance</h5>
+            <p class="card-text fs-3">{{ account.balance }} {{ account.currency }}</p>
+        </div>
+    </div>
+
+    <h4>Transaction History</h4>
+    {% if transactions %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>From/To</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td>{{ t.transaction_type }}</td>
+                    <td>
+                        {% if t.sender == user %}
+                            To: {{ t.recipient.username }}
+                        {% else %}
+                            From: {{ t.sender.username }}
+                        {% endif %}
+                    </td>
+                    <td>{{ t.amount }} {{ t.currency }}</td>
+                    <td>{{ t.timestamp|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No transactions yet.</p>
+    {% endif %}
+{% endblock %}

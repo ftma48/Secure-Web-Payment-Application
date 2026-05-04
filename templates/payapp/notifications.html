@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+    <h2>Notifications</h2>
+
+    <h4>Incoming Payment Requests</h4>
+    {% if incoming %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>From</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pr in incoming %}
+                <tr>
+                    <td>{{ pr.requester.username }}</td>
+                    <td>{{ pr.amount }} {{ pr.currency }}</td>
+                    <td>{{ pr.timestamp|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <form method="post" action="{% url 'handle_request' pr.id %}" style="display:inline">
+                            {% csrf_token %}
+                            <button name="action" value="accept" class="btn btn-success btn-sm">Accept</button>
+                            <button name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No pending requests.</p>
+    {% endif %}
+
+    <h4 class="mt-4">My Outgoing Requests</h4>
+    {% if outgoing %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>To</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pr in outgoing %}
+                <tr>
+                    <td>{{ pr.requestee.username }}</td>
+                    <td>{{ pr.amount }} {{ pr.currency }}</td>
+                    <td>{{ pr.timestamp|date:"d/m/Y H:i" }}</td>
+                    <td>{{ pr.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No outgoing requests.</p>
+    {% endif %}
+{% endblock %}
