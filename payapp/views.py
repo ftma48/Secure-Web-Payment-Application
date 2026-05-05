@@ -14,6 +14,10 @@ from register.forms import RegisterForm
 
 @login_required(login_url='/webapps2026/register/login/')
 def index(request):
+    # admin login
+    if request.user.is_staff:
+        return redirect('admin_users')
+
     account = Account.objects.get(user=request.user)
     transactions = Transaction.objects.filter(
         sender=request.user
